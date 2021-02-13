@@ -46,15 +46,24 @@ const testUrl = (url, done) => {
 
 const findUrl = (url, done) => {
   URL.findOne({ original_url: url }, (err, doc) => {
-    if (doc) return done(null, doc); //url found
-    done(null);
+    if (err) return done(err);
+    done(null, doc); //url found
+  });
+};
+
+const findShortUrl = (short, done) => {
+  URL.findOne({ short_url: short }, (err, doc) => {
+    if (err) return done(err);
+    done(null, doc);
   });
 };
 
 const saveUrl = (url, done) => {
   URL.countDocuments((err, count) => {
     new URL({ original_url: url, short_url: count }).save((err, doc) => {
-      if (err) return done(err);
+      if (err) {
+        return done(err);
+      }
       done(null, doc);
     });
   });
@@ -65,21 +74,30 @@ const destruct = ({ original_url, short_url }) => {
 };
 
 // Your first API endpoint
-app.post("/api/shorturl/new", function (req, res, next) {
+app.post("/api/shorturl/new", function (req, res) {
   let url = req.body.url;
   testUrl(url, (err, address) => {
-    if (err) return res.json({ error: "DNS ERROR" });
-    if (!address) return res.json({ error: "invalid URL" });
+    if (err) return res.json({ error: "Invalid Hostname" });
+    if (!address) return res.json({ error: "Invalid url" });
 
     findUrl(url, (err, doc) => {
-      if (doc) return res.json(destruct(doc));
-      saveUrl(url, (err, doc) => {
-        if (err) {
-          return res.json({ err });
-        }
-        res.json(destruct(doc));
-      });
+      if (err) return res.json(err);
+      if (doc) res.json(destruct(doc));
+      else {
+        saveUrl(url, (err, doc) => {
+          if (err) return res.json(err);
+          res.json(destruct(doc));
+        });
+      }
     });
+  });
+});
+
+app.get("/api/shorturl/:short", (req, res) => {
+  findShortUrl(req.params.short, (err, doc) => {
+    if (err) return res.json({ error: "invalid format" });
+    if (doc == null) res.json({ error: "url doesn't exist" });
+    else res.redirect(doc.original_url);
   });
 });
 

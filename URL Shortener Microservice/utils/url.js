@@ -1,12 +1,16 @@
 const re = new RegExp(
-  "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)"
+  /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/
 );
 const urlValidate = (url) => {
+  console.log(url);
+
   return re.test(url);
 };
 const removeHTTP = (url) => {
   url = url.replace(/^(?:https?:\/\/)?(?:www\.)?/, "");
+
   url = url.split("/")[0];
+
   return url;
 };
 
